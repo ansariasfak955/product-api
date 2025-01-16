@@ -8,3 +8,4 @@ Implemented product API integration using JavaScript to fetch and filter product
 - Filter products by category.
 - Single product page for detailed view.
 
+![Screenshot from 2025-01-16 12-21-46](https://github.com/user-attachments/assets/9a520da5-8701-4e36-b2d8-b12031e2b871)
