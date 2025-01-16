@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="style.css">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+
+    <title>Product API</title>
+
+    <style>
+   
+    </style>
+  </head>
+  <body>
+    
+    <section>
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <div class="container">
+              <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+              </button>
+              <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                  <li class="nav-item">
+                    <a class="nav-link active" aria-current="page" href="#">Home</a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="#">Link</a>
+                  </li>
+                  <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                      Dropdown
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                      <li><a class="dropdown-item" href="#">Action</a></li>
+                      <li><a class="dropdown-item" href="#">Another action</a></li>
+                      <li><hr class="dropdown-divider"></li>
+                      <li><a class="dropdown-item" href="#">Something else here</a></li>
+                    </ul>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">Disabled</a>
+                  </li>
+                </ul>
+                <form class="d-flex">
+                  <input class="form-control me-2" type="search" placeholder="Search" id="product-search" onkeyup="fetchProducts()" aria-label="Search">
+                </form>
+              </div>
+            </div>
+          </nav>
+    </section>
+
+    
+    <section class="container py-4">
+        <div class="row">
+          <!-- Category Section -->
+          <div class="col-12 col-md-3 p-3">
+            <h5 class="text-white text-center bg-secondary mb-3 p-3">Category</h5>
+            <ul class="list-group" id="category-list">
+              
+            </ul>
+            <div class="row">
+              <div class="range-section col-12 col-md-12 p-4">
+                <label for="minPriceRange" class="form-label p-3" style="font-size: 18px;">Price</label>
+                <span for="reset" class="form-label p-3 position-absolute" id="resetButton" 
+                style="font-size: 18px; left:22%; color:blue; cursor: pointer;">Reset</span>
+                
+                <!-- Min Price Range -->
+                 <div class="range-price position-relative">
+                  <input type="range" class="form-range min-range accent-black w-50" value="0" min="0" max="60" step="20"
+                   id="minPriceRange">
+                  <small class="absolute position-absolute" style="top: 100%; left: 8%;" id="rangeMin">Min: 0</small>
+                  
+                  <!-- Max Price Range -->
+                  <input type="range" class="form-range max-range accent-black position-absolute" 
+                  style="top:1%; width: 50%; right: 2%;" value="200" min="61" max="200"
+                   step="20" 
+                    id="maxPriceRange">
+                  <small class="absolute position-absolute" style="top: 100%; right: 8%;" id="rangeMax">Max: 200</small>
+                </div>
+              </div>
+            </div>
+            
+          </div>
+      
+          <!-- Product Cart Section -->
+          <div class="col-12 col-md-9 bg-gradient p-3">
+            <h5 class="text-white bg-secondary text-center mb-3 p-3">Products</h5>
+            <div class="row" id="products-container">
+              <!-- Products will be dynamically added here -->
+            </div>
+            <!-- Pagination controls -->
+            <div id="pagination" class="d-flex justify-content-center mt-4">
+              <button id="prevPage" class="btn btn-primary me-2" disabled>Previous</button>
+              <span id="pageNumber" class="align-self-center">Page 1</span>
+              <button id="nextPage" class="btn btn-primary ms-2">Next</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    
+
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+</body>
+<script>
+    let currentPage = 1;
+    const productsPerPage = 9;
+    let selectedCategory = null;
+
+    let minPrice = 0;
+    let maxPrice = 200;
+
+  // Listen to price range input changes
+  document.getElementById('minPriceRange').addEventListener('input', (event) => {
+    minPrice = event.target.value;
+    document.getElementById('rangeMin').textContent = `Min: $${minPrice}`;
+    fetchProducts();
+  });
+
+  document.getElementById('maxPriceRange').addEventListener('input', (event) => {
+    maxPrice = event.target.value;
+    document.getElementById('rangeMax').textContent = `Max: $${maxPrice}`;
+    fetchProducts();
+  });
+
+  document.getElementById('resetButton').addEventListener('click', function() {
+      minPrice = null;
+      maxPrice = null;
+
+      document.getElementById('minPriceRange').value = '';
+      document.getElementById('maxPriceRange').value = '';
+
+      window.location.reload();
+  });
+
+    // async function fetchProducts(page = 1) {
+  async function fetchProducts() {
+  try {
+    // const response = await fetch(`https://api.escuelajs.co/api/v1/products?offset=${(page - 1) * productsPerPage}&limit=${productsPerPage}`);
+    const response = await fetch(`https://api.escuelajs.co/api/v1/products`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const products = await response.json();
+    // console.log('Working: ', products)
+    const searchInput = document.getElementById('product-search').value.toLowerCase();
+
+    const productsContainer = document.getElementById('products-container');
+    productsContainer.innerHTML = '';
+
+    const categoryList = document.getElementById('category-list');
+    categoryList.innerHTML = '';
+
+    const uniqueCategories = new Set();
+
+    console.log('All products: ', products);
+
+    products
+    .filter((product) => {
+        const categoryName = product.category.name;
+        uniqueCategories.add(categoryName);
+
+        const matchesSearch = product.title.toLowerCase().includes(searchInput);
+        const matchesCategory =
+          selectedCategory === null || selectedCategory === product.category.name;
+
+           // Price range filter
+           const matchesPrice =
+            product.price >= minPrice && product.price <= maxPrice;
+
+        return matchesSearch && matchesCategory && matchesPrice;
+      })
+
+    .forEach((product) => {
+      const imageUrl = product.images[0]?.replace(/[\"[\]]/g, '') || '';
+
+      console.log('Products :', product)
+
+      // Filter products based on selected category
+    //   if (selectedCategory === null || selectedCategory === categoryName) {
+
+        const shortDescription = product.description.length > 100 
+        ? product.description.slice(0, 100) + '...' 
+        : product.description;
+
+        const productCard = document.createElement('div');
+        productCard.classList.add('col-12', 'col-sm-6', 'col-md-4', 'mb-3', 'product-card');
+        productCard.innerHTML = `
+          <div class="card">
+            <img src="${imageUrl}" class="card-img-top" alt="${product.title}">
+            <div class="card-body">
+              <h6 class="card-title">${product.title}</h6>
+              <p class="card-description">${shortDescription}</p>
+              <p class="card-text">$${product.price.toFixed(2)}</p>
+            </div>
+          </div>
+        `;
+        productsContainer.appendChild(productCard);
+
+        // single product click event
+        productCard.querySelector('.card').addEventListener('click', () => {
+          window.location.href = `single-product.html?id=${product.id}`;
+        });
+    //   }
+    });
+
+    // default all product
+    const allCategoriesItem = document.createElement('li');
+    allCategoriesItem.classList.add('list-group-item');
+    allCategoriesItem.textContent = 'All';
+    allCategoriesItem.addEventListener('click', () => {
+      selectedCategory = null;
+      currentPage = 1;
+      fetchProducts();
+    });
+    categoryList.appendChild(allCategoriesItem);
+
+    // category base product 
+    uniqueCategories.forEach((categoryName) => {
+      const categoryItem = document.createElement('li');
+      categoryItem.classList.add('list-group-item');
+      categoryItem.textContent = categoryName;
+      categoryItem.addEventListener('click', () => {
+        selectedCategory = categoryName;
+        currentPage = 1;
+        fetchProducts();
+      });
+      categoryList.appendChild(categoryItem);
+    });
+
+    // pagination controls
+    // document.getElementById('pageNumber').textContent = `Page ${page}`;
+    // document.getElementById('prevPage').disabled = page === 1;
+    // document.getElementById('nextPage').disabled = products.length < productsPerPage;
+
+  } catch (error) {
+    console.error('Error fetching products:', error);
+  }
+}
+
+//  list for pagination
+// document.getElementById('prevPage').addEventListener('click', () => {
+//   if (currentPage > 1) {
+//     currentPage--;
+//     fetchProducts(currentPage);
+//   }
+// });
+
+// document.getElementById('nextPage').addEventListener('click', () => {
+//   currentPage++;
+//   fetchProducts(currentPage);
+// });
+
+
+// fetchProducts(currentPage);
+fetchProducts();
+</script>
+</html>
